@@ -1,0 +1,138 @@
+service: awsserverlessbloodbankmanagementsystem
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: default
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: !GetAtt DynamoDBPatientTable.Arn
+    - Effect: Allow
+      Action:
+        - cognito-idp:AdminAddUserToGroup # Add this line for Cognito operation
+      Resource: "*"
+        
+
+
+functions:
+  AddPatient:
+    handler: functions/AddNewPatient.handler
+    events: 
+      - http:
+          path: /AddPatient
+          method: POST
+          # authorizer:
+          #   name: WebCognitoUserPoolAuthorizer
+          #   type: COGNITO_USER_POOLS
+          #   arn: !GetAtt CognitoUserPool.Arn
+  UpdatePatient:
+    handler: functions/UpdatePatient.handler
+    events:
+      - http:
+          path: /UpdatePatient/{id}
+          method: POST
+  DeletePatient:
+    handler:  functions/DeletePatient.handler
+    events:
+      - http:
+          path: /DeletePatient/{id}
+          method: DELETE
+  AllPatientsData:
+    handler:  functions/ListOfAllPatient.handler
+    events:
+      - http:
+          path: /AllPatientsData
+          method: GET
+  # PostFunction:
+  #   handler: funtions/PostConfirmation.handler
+  #   events:
+  #     - cognitoUserPool:
+  #         pool: us-east-1_SYkgZDH1r
+  #         trigger: PostConfirmation
+
+resources:
+  Resources:
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AliasAttributes:
+          - email
+        UsernameConfiguration:
+          CaseSensitive: false
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireUppercase: true
+            RequireSymbols: true
+        Schema:
+          - AttributeDataType: String
+            Mutable: true
+            Name: given_name
+            Required: true
+            StringAttributeConstraints:
+              MinLength: "1"
+          - AttributeDataType: String
+            Mutable: true
+            Name: family_name
+            Required: true
+            StringAttributeConstraints:
+              MinLength: "1"
+          - AttributeDataType: String
+            Mutable: true
+            Name: email
+            Required: true
+            StringAttributeConstraints:
+              MinLength: "1"
+    WebCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: BloodBankClientPool
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        PreventUserExistenceErrors: ENABLED
+    CognitoUserPoolGroupPatient:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: "Group of Patients in Cognito"
+        GroupName: "Patient"
+        UserPoolId:
+          Ref: CognitoUserPool #Refers to the user pool created above
+    CognitoUserPoolGroupDonor:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties: 
+        Description: "Group of Donor in Cognito"
+        GroupName: "Donor"
+        UserPoolId:
+          Ref: CognitoUserPool #Refers to the user pool created above
+    DynamoDBPatientTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH 
+    DynamoDBDonotTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH 
+
+

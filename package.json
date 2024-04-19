@@ -1,0 +1,19 @@
+{
+  "name": "aws-serverless-bloodbankmanagementsystem",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "^3.38.0"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1601.0",
+    "uuid": "^9.0.1"
+  }
+}
