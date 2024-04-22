@@ -10,7 +10,10 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: !GetAtt DynamoDBPatientTable.Arn
+      Resource: [
+        !GetAtt DynamoDBPatientTable.Arn,
+        !GetAtt DynamoDBDonorTable.Arn
+      ]
     - Effect: Allow
       Action:
         - cognito-idp:AdminAddUserToGroup # Add this line for Cognito operation
@@ -20,7 +23,7 @@ provider:
 
 functions:
   AddPatient:
-    handler: functions/AddNewPatient.handler
+    handler: functions/Patient/AddNewPatient.handler
     events: 
       - http:
           path: /AddPatient
@@ -30,29 +33,69 @@ functions:
           #   type: COGNITO_USER_POOLS
           #   arn: !GetAtt CognitoUserPool.Arn
   UpdatePatient:
-    handler: functions/UpdatePatient.handler
+    handler: functions/Patient/UpdatePatient.handler
     events:
       - http:
           path: /UpdatePatient/{id}
           method: POST
   DeletePatient:
-    handler:  functions/DeletePatient.handler
+    handler:  functions/Patient/DeletePatient.handler
     events:
       - http:
           path: /DeletePatient/{id}
           method: DELETE
   AllPatientsData:
-    handler:  functions/ListOfAllPatient.handler
+    handler:  functions/Patient/ListOfAllPatient.handler
     events:
       - http:
           path: /AllPatientsData
           method: GET
-  # PostFunction:
-  #   handler: funtions/PostConfirmation.handler
-  #   events:
-  #     - cognitoUserPool:
-  #         pool: us-east-1_SYkgZDH1r
-  #         trigger: PostConfirmation
+  PostFunction:
+    handler: functions/Patient/PostConfirmation.handler
+    events:
+      - cognitoUserPool:
+          pool: us-east-1_SYkgZDH1r
+          trigger: PostConfirmation
+  AddDonor:
+    handler: functions/Donor/AddNewDonor.handler
+    events: 
+      - http:
+          path: /AddDonor
+          method: POST
+  UpdateDonor:
+    handler: functions/Donor/UpdateDonor.handler
+    events:
+      - http:
+          path: /UpdateDonor/{id}
+          method: POST
+  DeleteDonor:
+    handler:  functions/Donor/DeleteDonor.handler
+    events:
+      - http:
+          path: /DeleteDonor/{id}
+          method: DELETE
+  AllDonorsData:
+    handler:  functions/Donor/ListOfAllDonor.handler
+    events:
+      - http:
+          path: /AllDonorsData
+          method: GET
+  ReportOfDonor:
+    handler: functions/Reports/ReportOfDonor.handler
+    events: 
+      - http:
+          path: /ReportOfDonor/{id}
+          method: GET
+          # authorizer:
+          #   name: WebCognitoUserPoolAuthorizer
+          #   type: COGNITO_USER_POOLS
+          #   arn: !GetAtt CognitoUserPool.Arn
+  ReportOfPatient:
+    handler: functions/Reports/ReportOfPatient.handler
+    events:
+      - http:
+          path: /ReportOfPatient/{id}
+          method: GET
 
 resources:
   Resources:
@@ -124,7 +167,7 @@ resources:
         KeySchema:
           - AttributeName: id
             KeyType: HASH 
-    DynamoDBDonotTable:
+    DynamoDBDonorTable:
       Type: AWS::DynamoDB::Table
       Properties:
         BillingMode: PAY_PER_REQUEST

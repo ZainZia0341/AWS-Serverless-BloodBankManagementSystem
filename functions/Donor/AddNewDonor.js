@@ -2,22 +2,23 @@ const { v4 } = require("uuid")
 const AWS = require("aws-sdk")
 
 const handler = async (event) => {
-  const { Name, FatherName, Age, Gender } = JSON.parse(event.body)
+  const { Name, FatherName, Age, Gender, BloodType } = JSON.parse(event.body)
   const dynamodb = new AWS.DynamoDB.DocumentClient()
   const id = v4()
 
-  const NewPatient = {
+  const NewDonor = {
     id,
     Name,
     FatherName,
     Age,
-    Gender
+    Gender,
+    BloodType
   }
 
   try {
     const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
     const params = {
-        GroupName: 'Patient',
+        GroupName: 'Donor',
         Username: 'hasnain', 
         UserPoolId: 'us-east-1_SYkgZDH1r'
     };
@@ -28,13 +29,13 @@ const handler = async (event) => {
   }
 
   await dynamodb.put({
-    TableName: "awsserverlessbloodbankmanagementsystem-dev-DynamoDBPatientTable-1A9W56M44ANZT",
-    Item: NewPatient
+    TableName: "awsserverlessbloodbankmanagementsystem-dev-DynamoDBDonorTable-DXB6PPASX8SH",
+    Item: NewDonor
   }).promise()
-  console.log(NewPatient)
+  console.log(NewDonor)
   return {
     statusCode: 200,
-    body: JSON.stringify(NewPatient),
+    body: JSON.stringify(NewDonor),
   };
 
 }
